@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     xvfb \
-    libgconf-2-4 \
     libxss1 \
     libnss3 \
     libnspr4 \
@@ -71,19 +70,21 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install playwright browsers and dependencies
+# First install the missing font packages that playwright needs
+RUN apt-get update && apt-get install -y \
+    fonts-liberation \
+    fonts-noto-color-emoji \
+    fonts-unifont \
+    && rm -rf /var/lib/apt/lists/*
+
 # playwright documentation suggests PLAYWRIGHT_BROWSERS_PATH is still relevant
 # or that playwright installs to a similar default location that Playwright would.
 # Let's assume playwright respects PLAYWRIGHT_BROWSERS_PATH or its default install location is findable.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-browsers
 RUN mkdir -p $PLAYWRIGHT_BROWSERS_PATH
 
-# Install recommended: Google Chrome (instead of just Chromium for better undetectability)
-# The 'playwright install chrome' command might download and place it.
-# The '--with-deps' equivalent for playwright install is to run 'playwright install-deps chrome' after.
-# RUN playwright install chrome --with-deps
-
-# Alternative: Install Chromium if Google Chrome is problematic in certain environments
-RUN playwright install chromium --with-deps
+# Alternative: Install Chromium if Google Chrome is problematic in certain environments  
+RUN playwright install chromium --only-shell
 
 
 # Copy the application code
